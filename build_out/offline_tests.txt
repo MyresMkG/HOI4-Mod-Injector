@@ -1,0 +1,192 @@
+== build ==
+  (--no-build: testing the DLLs already in D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\build_out)
+  testing: D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\build_out
+== export tables ==
+  ok   dxgi.dll: every name is exported (19, missing: none)
+  ok   dxgi.dll: no invented names (none)
+  ok   dxgi.dll: ordinals match (none)
+  ok   dxgi.dll: every export forwards to System32 (none)
+  ok   d3d11.dll: every name is exported (51, missing: none)
+  ok   d3d11.dll: no invented names (none)
+  ok   d3d11.dll: ordinals match (none)
+  ok   d3d11.dll: every export forwards to System32 (none)
+  ok   d3d9.dll: every name is exported (17, missing: none)
+  ok   d3d9.dll: no invented names (none)
+  ok   d3d9.dll: ordinals match (none)
+  ok   d3d9.dll: every export forwards to System32 (none)
+       note: d3d9.dll has 6 ordinal-only export(s); those cannot be forwarded by name
+  ok   version.dll: every name is exported (17, missing: none)
+  ok   version.dll: no invented names (none)
+  ok   version.dll: ordinals match (none)
+  ok   version.dll: every export forwards to System32 (none)
+  ok   winmm.dll: every name is exported (180, missing: none)
+  ok   winmm.dll: no invented names (none)
+  ok   winmm.dll: ordinals match (none)
+  ok   winmm.dll: every export forwards to System32 (none)
+       note: winmm.dll has 1 ordinal-only export(s); those cannot be forwarded by name
+== shipped DLLs ==
+  ok   ..\..\full_releases\hoi4_mod_injector holds the same code as the build under test
+== build host stub and test mod ==
+  host: D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\host\hoi4.exe
+== loader: one proxy per case ==
+  ok   [dxgi] the loader log is in the game root
+  ok   [dxgi] and no longer inside injected_mods
+  ok   [dxgi] host ran (exit 0)
+  ok   [dxgi] forwarded version API answered
+  ok   [dxgi] the test DLL was loaded
+  ok   [dxgi] its DllMain ran exactly once
+  ok   [dxgi] summary line
+  ok   [dxgi] 32-bit DLL rejected
+  ok   [dxgi] non-PE file rejected
+  ok   [dxgi] a file with a broken header offset is rejected
+  ok   [dxgi] a directory in injected_mods is not a candidate
+  ok   [dxgi] a copy of the loader in injected_mods is skipped
+  ok   [dxgi] the log names the delay_ms it used
+  ok   [dxgi] the loader thread was started by the message-loop wake-up
+  ok   [dxgi] it was not started before delay_ms (782 ms)
+  ok   [dxgi] no thread was started at attach
+       ---- dxgi log ----
+       [     0.000] hoi4_mod_loader 1.1 -- proxy 'dxgi.dll', pid 210936
+       [     0.000] game  : D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\t1_dxgi\hoi4.exe
+       [     0.000] mods  : D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\t1_dxgi\injected_mods
+       [     0.000] crt   : no per-thread data flag found in hoi4.exe; delay_ms only
+       [     0.000] start : the message loop started (782 ms into the process)
+       [     0.000] ini   : D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\t1_dxgi\injected_mods\hoi4_mod_loader.ini (delay_ms=300)
+       [     0.094] 5 candidate(s), 1 to load
+       [     0.094]   [skip] bad_32bit.dll: not an x64 DLL (machine 0x014c, the game is x64)
+       [     0.094]   [skip] bad_header.dll: not a PE image (bad header offset)
+       [     0.094]   [skip] broken.dll: not a PE image (no MZ signature)
+       [     0.094]   [skip] dxgi.dll: this is the loader itself
+       [     0.094] loading [1/1] zz_test_mod.dll ... ok (module 00007fff308a0000)
+       [     0.094] 1 of 1 DLL(s) loaded into pid 210936
+       [     0.094] done, 813 ms after attach
+       ---- host output ----
+       host    : D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\t1_dxgi\hoi4.exe
+       refs    : 20 resolve-only import(s), sink 0x80
+       dxgi.dll    : D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\t1_dxgi\dxgi.dll
+       d3d11.dll   : C:\Windows\SYSTEM32\d3d11.dll
+       d3d9.dll    : C:\Windows\SYSTEM32\d3d9.dll
+       version.dll : C:\Windows\SYSTEM32\VERSION.dll
+       winmm.dll   : C:\Windows\SYSTEM32\WINMM.dll
+       version size : 1788
+       timeBeginPeriod : 0
+       wave devices : 2
+       d3d9 factory : 0000025be17d46c0
+       d3d9ex factory : hr=0x00000000 ptr=0000025be17d46c0
+       dxgi factory : hr=0x00000000 ptr=0000025be35e1690
+       dxgi factory2 : hr=0x00000000 ptr=0000025be35e1690
+       d3d11 device : hr=0x00000000 level=0xb000
+       host done
+  ok   [d3d11] the loader log is in the game root
+  ok   [d3d11] and no longer inside injected_mods
+  ok   [d3d11] host ran (exit 0)
+  ok   [d3d11] forwarded version API answered
+  ok   [d3d11] the test DLL was loaded
+  ok   [d3d11] its DllMain ran exactly once
+  ok   [d3d11] summary line
+  ok   [d3d11] 32-bit DLL rejected
+  ok   [d3d11] non-PE file rejected
+  ok   [d3d11] a file with a broken header offset is rejected
+  ok   [d3d11] a directory in injected_mods is not a candidate
+  ok   [d3d11] a copy of the loader in injected_mods is skipped
+  ok   [d3d11] the log names the delay_ms it used
+  ok   [d3d11] the loader thread was started by the message-loop wake-up
+  ok   [d3d11] it was not started before delay_ms (777 ms)
+  ok   [d3d11] no thread was started at attach
+  ok   [d3d9] the loader log is in the game root
+  ok   [d3d9] and no longer inside injected_mods
+  ok   [d3d9] host ran (exit 0)
+  ok   [d3d9] forwarded version API answered
+  ok   [d3d9] the test DLL was loaded
+  ok   [d3d9] its DllMain ran exactly once
+  ok   [d3d9] summary line
+  ok   [d3d9] 32-bit DLL rejected
+  ok   [d3d9] non-PE file rejected
+  ok   [d3d9] a file with a broken header offset is rejected
+  ok   [d3d9] a directory in injected_mods is not a candidate
+  ok   [d3d9] a copy of the loader in injected_mods is skipped
+  ok   [d3d9] the log names the delay_ms it used
+  ok   [d3d9] the loader thread was started by the message-loop wake-up
+  ok   [d3d9] it was not started before delay_ms (781 ms)
+  ok   [d3d9] no thread was started at attach
+  ok   [version] the loader log is in the game root
+  ok   [version] and no longer inside injected_mods
+  ok   [version] host ran (exit 0)
+  ok   [version] forwarded version API answered
+  ok   [version] the test DLL was loaded
+  ok   [version] its DllMain ran exactly once
+  ok   [version] summary line
+  ok   [version] 32-bit DLL rejected
+  ok   [version] non-PE file rejected
+  ok   [version] a file with a broken header offset is rejected
+  ok   [version] a directory in injected_mods is not a candidate
+  ok   [version] a copy of the loader in injected_mods is skipped
+  ok   [version] the log names the delay_ms it used
+  ok   [version] the loader thread was started by the message-loop wake-up
+  ok   [version] it was not started before delay_ms (789 ms)
+  ok   [version] no thread was started at attach
+  ok   [winmm] the loader log is in the game root
+  ok   [winmm] and no longer inside injected_mods
+  ok   [winmm] host ran (exit 0)
+  ok   [winmm] forwarded version API answered
+  ok   [winmm] the test DLL was loaded
+  ok   [winmm] its DllMain ran exactly once
+  ok   [winmm] summary line
+  ok   [winmm] 32-bit DLL rejected
+  ok   [winmm] non-PE file rejected
+  ok   [winmm] a file with a broken header offset is rejected
+  ok   [winmm] a directory in injected_mods is not a candidate
+  ok   [winmm] a copy of the loader in injected_mods is skipped
+  ok   [winmm] the log names the delay_ms it used
+  ok   [winmm] the loader thread was started by the message-loop wake-up
+  ok   [winmm] it was not started before delay_ms (792 ms)
+  ok   [winmm] no thread was started at attach
+== loader: a host that is not the game ==
+  ok   the foreign host still ran (exit 0)
+  ok   the loader refused to act outside the game
+  ok   no mod was loaded into the foreign host
+== loader: three proxies at once ==
+  ok   host ran (exit 0)
+  ok   exactly one proxy loaded the mods
+  ok   the other proxies reported the module as already loaded
+  ok   DllMain still ran exactly once
+== loader: probe marker ==
+  ok   probe mode was announced
+  ok   diplo_action_hook_probe_only.txt was created next to the mod
+== loader: no injected_mods ==
+  ok   the missing folder is mentioned
+  ok   the log tells the player what to do
+  ok   no DLL was loaded
+== loader: the launcher shape (no message loop, a late thread) ==
+  ok   host ran (exit 0)
+  ok   the thread attach is what started the loader thread
+  ok   the mod was loaded
+== loader: each start replaces the log ==
+  ok   the earlier run is gone
+  ok   the file holds exactly the run that just happened
+  ok   and it starts at its own header line
+== loader: the worker still waits out delay_ms ==
+  ok   the worker waited the rest of delay_ms out
+  ok   the mod was loaded after the wait
+== loader: the ini as editors write it ==
+  ok   [lf] delay_ms was read and used, not the 700 default
+  ok   [lf] the log names the ini and the value it produced
+  ok   [crlf] delay_ms was read and used, not the 700 default
+  ok   [crlf] the log names the ini and the value it produced
+  ok   [utf8_bom] delay_ms was read and used, not the 700 default
+  ok   [utf8_bom] the log names the ini and the value it produced
+  ok   [utf16_le] delay_ms was read and used, not the 700 default
+  ok   [utf16_le] the log names the ini and the value it produced
+  ok   [utf16_be] delay_ms was read and used, not the 700 default
+  ok   [utf16_be] the log names the ini and the value it produced
+  ok   [comments_spaces] delay_ms was read and used, not the 700 default
+  ok   [comments_spaces] the log names the ini and the value it produced
+== loader: ini values that cannot be used ==
+  ok   a value below the range is reported
+  ok   a value above the range is reported
+  ok   a misspelled key is reported instead of silently ignored
+  ok   a junk line is reported
+  ok   the default was used instead
+  ok   the mod was still loaded
+
+138 checks, 0 failure(s)
