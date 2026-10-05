@@ -55,7 +55,7 @@
 | 8 | `OPENGL32.dll` | 46 | ✓ | 实测 |
 | 9 | `D3DCOMPILER_47.dll` | 1 | ✓ | 实测（`D3DCompile`） |
 | 10 | `d3d11.dll` | 1 | ✓ | 实测（`D3D11CreateDevice`） |
-| 11 | `dxgi.dll` | 2 | ✓ | 实测；**本机游戏目录已被本项目的注入器占用**（见附 E） |
+| 11 | `dxgi.dll` | 2 | ✓ | 实测 |
 | 12 | `d3dx9_43.dll` | 8 | ✓ | 实测 |
 | 13 | `d3d9.dll` | 2 | ✓ | 实测（`Direct3DCreate9` / `Direct3DCreate9Ex`） |
 | 14 | `XINPUT1_3.dll` | 2 | ✓ | 实测；**2 个全按序号导入**（`#2 XInputGetState`、`#4 XInputGetCapabilities`）——群星没有这个静态导入 |
@@ -81,9 +81,8 @@
 `SHELL32`、`ole32`、`OLEAUT32`、`ADVAPI32`、`bcrypt`）都在 KnownDLLs 里，
 放同名文件会被忽略。
 
-> ⚠ 本机游戏目录里 `version.dll` / `winmm.dll` 已经被整合版（Juij）的 Steam 模拟器占用、
-> `dxgi.dll` 被本项目的 `hoi4_mod_injector` 占用；`steam_api64.dll` / `PDXSDK.dll` / `tbb.dll`
-> 是游戏自己的文件。实际挑名字时要避开这些（详见附 E）。
+> ⚠ `steam_api64.dll` / `PDXSDK.dll` / `tbb.dll`
+> 是游戏自己的文件。实际挑名字时要避开这些。
 
 ## 2. 实测结果（本机 Windows 10 19045）
 
