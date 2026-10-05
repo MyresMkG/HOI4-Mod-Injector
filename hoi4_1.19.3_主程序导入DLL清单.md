@@ -48,8 +48,8 @@
 | 1 | `PDXSDK.dll` | 38 | ✓ | 游戏自带文件（1165 个 C++ 导出） |
 | 2 | `SETUPAPI.dll` | 9 | ✗ 受保护 | KnownDLL |
 | 3 | `IMM32.dll` | 10 | ✗ 受保护 | KnownDLL |
-| 4 | `VERSION.dll` | 3 | ✓ | 本机游戏目录已被整合版占用（见附 E） |
-| 5 | `WINMM.dll` | 20 | ✓ | 本机游戏目录已被整合版占用（见附 E） |
+| 4 | `VERSION.dll` | 3 | ✓ | 实测 |
+| 5 | `WINMM.dll` | 20 | ✓ | 实测 |
 | 6 | `tbb.dll` | 22 | ✓ | **游戏自带文件**（Intel TBB，243 个导出；System32 里没有这个名字） |
 | 7 | `WS2_32.dll` | 7 | ✗ 受保护 | KnownDLL；**4 个按序号导入**（`#8 htonl`、`#14 ntohl`、`#57 gethostname`、`#115 WSAStartup`） |
 | 8 | `OPENGL32.dll` | 46 | ✓ | 实测 |
