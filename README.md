@@ -7,15 +7,13 @@
 `d3dx9_43.dll` / `xinput1_3.dll`，一共九种），加载器就在游戏进程里跑，不需要外部工具。
 
 源码是从 `stellaris` 项目的 `stellaris_mod_injector_dll_src` 逐行移植过来的，
-按用户要求只做三处替换：宿主进程名 `stellaris.exe` → `hoi4.exe`、名字
+只做三处替换：宿主进程名 `stellaris.exe` → `hoi4.exe`、名字
 `stellaris_mod_injector_dll` → `hoi4_mod_injector`、日志文件名
 `stellaris_mod_loader.log` → `hoi4_mod_loader.log`。其余行为、日志形状、
 探测标记、互斥量、加载顺序、PE 检查都与原版一致（内部名跟着日志走：
 `hoi4_mod_loader 1.1 -- proxy '...'`、`hoi4_mod_loader_probe.txt`）。
-原版的 ini（`hoi4_mod_loader.ini` 的 `delay_ms`）已按要求移除：现在固定等进程满
-700 ms 再加载，没有可配置项，那个文件既不读也不生成。
 
-成品和面向玩家的说明在 `..\..\full_releases\hoi4_mod_injector\`。
+（注：使用deepseek-v4.1-flash编写，harness为Kimi Code）
 
 ---
 
