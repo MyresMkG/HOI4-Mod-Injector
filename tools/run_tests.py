@@ -9,11 +9,13 @@ r"""Build the proxy DLLs and test them without touching the game.
   3. loader tests: a host named hoi4.exe plus an injected_mods folder --
      the test DLL must be loaded once, bad files skipped, a foreign host name
      must be ignored, several proxies together must still load the mods once
-  4. loader options: the probe marker, and a sub-directory in injected_mods that
-     must not be taken for a DLL
+  4. loader options: the generated INI, delay_ms and probe setting; DLLs in injected_mods itself or deeper
+     than its immediate child directories must not be scanned
+  5. per-DLL disable markers: sibling <DLL filename>noinject files skip loading
+     before PE checks and probe handling; removing them restores loading
 
-There is no ini to test any more: the loader waits the same 700 ms on every
-start (kDelayMs in src/dllmain.cpp) and reads no configuration file at all.
+The loader generates injected_mods/hoi4_mod_injector.ini when missing and
+reads [injector] delay_ms (default 700) and probe (default 0) on each start.
 
 The DLLs built here land in build_out\ -- what players get is built by
 build.bat into ..\..\full_releases\hoi4_mod_injector\. When both exist their
@@ -198,7 +200,7 @@ def build_tools():
 # -------------------------------------------------------------- 3. helpers
 
 def setup_case(case, proxies, host_name='hoi4.exe', with_mods=True,
-               extra_files=(), extra_dirs=(), probe=False, self_copy=False):
+               extra_files=(), extra_dirs=(), probe=False, self_copy=False, config_text=None):
     case_dir = os.path.join(WORK, case)
     shutil.rmtree(case_dir, ignore_errors=True)
     os.makedirs(case_dir)
@@ -207,19 +209,21 @@ def setup_case(case, proxies, host_name='hoi4.exe', with_mods=True,
     shutil.copy(os.path.join(WORK, 'host', 'hoi4.exe'), os.path.join(case_dir, host_name))
     if with_mods:
         mods = os.path.join(case_dir, 'injected_mods')
-        os.makedirs(mods)
-        shutil.copy(os.path.join(WORK, 'mod', 'zz_test_mod.dll'), mods)
+        mod_dir = os.path.join(mods, 'test_mod')
+        os.makedirs(mod_dir)
+        shutil.copy(os.path.join(WORK, 'mod', 'zz_test_mod.dll'), mod_dir)
         for source, target in extra_files:
-            shutil.copy(source, os.path.join(mods, target))
+            shutil.copy(source, os.path.join(mod_dir, target))
         for name in extra_dirs:
-            os.makedirs(os.path.join(mods, name))
+            os.makedirs(os.path.join(mod_dir, name))
         if self_copy:
             shutil.copy(os.path.join(OUT, proxies[0] + '.dll'),
-                        os.path.join(mods, proxies[0] + '.dll'))
-        if probe:
-            with open(os.path.join(mods, 'hoi4_mod_loader_probe.txt'), 'w',
-                      encoding='ascii') as fh:
-                fh.write('probe\n')
+                        os.path.join(mod_dir, proxies[0] + '.dll'))
+        if probe and config_text is None:
+            config_text = '[injector]\ndelay_ms=700\nprobe=1\n'
+        if config_text is not None:
+            with open(os.path.join(mods, 'hoi4_mod_injector.ini'), 'w', encoding='ascii') as fh:
+                fh.write(config_text)
     return case_dir
 
 
@@ -262,13 +266,28 @@ def test_each_proxy():
                                        (bad_header, 'bad_header.dll')],
                           extra_dirs=['nested.dll'], self_copy=True)
         mods = os.path.join(case, 'injected_mods')
+        mod_dir = os.path.join(mods, 'test_mod')
+        deep_dir = os.path.join(mod_dir, 'deeper')
+        os.makedirs(deep_dir)
+        # Valid DLLs at excluded depths must neither be inspected nor loaded.
+        test_dll = os.path.join(WORK, 'mod', 'zz_test_mod.dll')
+        shutil.copy(test_dll, os.path.join(mods, 'root_ignored.dll'))
+        shutil.copy(test_dll, os.path.join(deep_dir, 'deep_ignored.dll'))
         r = run_host(case)
-        log = read(os.path.join(case, 'hoi4_mod_loader.log'))
-        mod_log = read(os.path.join(mods, 'zz_test_mod.log'))
-        check(os.path.exists(os.path.join(case, 'hoi4_mod_loader.log')),
-              '[%s] the loader log is in the game root' % name)
-        check(not os.path.exists(os.path.join(mods, 'hoi4_mod_loader.log')),
-              '[%s] and no longer inside injected_mods' % name)
+        log = read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'))
+        mod_log = read(os.path.join(mod_dir, 'zz_test_mod.log'))
+        check(os.path.exists(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log')),
+              '[%s] the loader log is inside injected_mods with the new name' % name)
+        check(not os.path.exists(os.path.join(case, 'hoi4_mod_injector.log'))
+              and not os.path.exists(os.path.join(case, 'hoi4_mod_loader.log'))
+              and not os.path.exists(os.path.join(mods, 'hoi4_mod_loader.log')),
+              '[%s] no root log or old log name is generated' % name)
+        check('root_ignored.dll' not in log
+              and not os.path.exists(os.path.join(mods, 'zz_test_mod.log')),
+              '[%s] DLLs in injected_mods itself are ignored' % name)
+        check('deep_ignored.dll' not in log
+              and not os.path.exists(os.path.join(deep_dir, 'zz_test_mod.log')),
+              '[%s] DLLs deeper than immediate child directories are ignored' % name)
         check(r.returncode == 0, '[%s] host ran (exit %s)' % (name, r.returncode))
         check('version size : 0' not in r.stdout and 'version size :' in r.stdout,
               '[%s] forwarded version API answered' % name)
@@ -284,16 +303,15 @@ def test_each_proxy():
         check('[skip] bad_header.dll: not a PE image (bad header offset)' in log,
               '[%s] a file with a broken header offset is rejected' % name)
         check('nested.dll' not in log and '5 candidate(s), 1 to load' in log,
-              '[%s] a directory in injected_mods is not a candidate' % name)
+              '[%s] a directory named .dll is not a candidate' % name)
         check('[skip] %s.dll: this is the loader itself' % name in log,
-              '[%s] a copy of the loader in injected_mods is skipped' % name)
-        # The 700 ms wait (kDelayMs in src/dllmain.cpp) is what the timing hangs
-        # on: this host has no CRT probe, so a wake-up is not taken before the
-        # process is 700 ms old, and the start line names the age it arrived at.
-        # No ini is read any more, so neither "ini   :" nor "delay_ms" may turn
-        # up in the log.
-        check('ini   :' not in log and 'delay_ms' not in log,
-              '[%s] the log carries no ini and no delay_ms' % name)
+              '[%s] a copy of the loader in a child directory is skipped' % name)
+        check('ini   :' in log and 'delay_ms=700, probe=0' in log,
+              '[%s] the default configuration is logged' % name)
+        ini = read(os.path.join(mods, 'hoi4_mod_injector.ini'))
+        check('[injector]' in ini and 'delay_ms=700' in ini and 'probe=0' in ini
+              and '; delay_ms:' in ini and '; probe:' in ini,
+              '[%s] a commented default configuration is generated' % name)
         started = re.search(r'start : the message loop started \((\d+) ms into the process\)', log)
         check(started is not None,
               '[%s] the loader thread was started by the message-loop wake-up' % name)
@@ -310,15 +328,100 @@ def test_each_proxy():
                 '       ' + line for line in r.stdout.strip().splitlines()))
 
 
+def test_noinject_markers():
+    print('== loader: sibling dllnoinject markers ==')
+    for name in NAMES:
+        case = setup_case('t14_noinject_' + name, [name], probe=True)
+        mods = os.path.join(case, 'injected_mods')
+        disabled = os.path.join(mods, 'test_mod')
+        marker = os.path.join(disabled, 'zz_test_mod.dllnoinject')
+        with open(marker, 'wb'):
+            pass
+        with open(os.path.join(disabled, 'broken.dll'), 'wb') as fh:
+            fh.write(b'not a DLL')
+        with open(os.path.join(disabled, 'broken.dllnoinject'), 'w') as fh:
+            fh.write('disabled')
+        for folder in ['same_name', 'directory_marker']:
+            mod_dir = os.path.join(mods, folder)
+            os.makedirs(mod_dir)
+            shutil.copy(os.path.join(WORK, 'mod', 'zz_test_mod.dll'), mod_dir)
+        os.makedirs(os.path.join(mods, 'directory_marker', 'zz_test_mod.dllnoinject'))
+        for suffix in ['.noinject', '.dllnoload']:
+            with open(os.path.join(mods, 'same_name', 'zz_test_mod' + suffix), 'wb'):
+                pass
+
+        r = run_host(case)
+        log_path = os.path.join(mods, 'hoi4_mod_injector.log')
+        log = read(log_path)
+        probe_flag = os.path.join(disabled, 'diplo_action_hook_probe_only.txt')
+        check(r.returncode == 0, '[%s] noinject host ran' % name)
+        check('[skip] zz_test_mod.dll: disabled by zz_test_mod.dllnoinject' in log,
+              '[%s] an empty sibling marker skips the DLL with a reason' % name)
+        check('[skip] broken.dll: disabled by broken.dllnoinject' in log,
+              '[%s] noinject is checked before the PE header' % name)
+        check('4 candidate(s), 2 to load' in log and '2 of 2 DLL(s) loaded' in log,
+              '[%s] marker files are not candidates or counted as loadable' % name)
+        check(not os.path.exists(os.path.join(disabled, 'zz_test_mod.log')),
+              '[%s] the disabled DLL never ran DllMain' % name)
+        check(not os.path.exists(probe_flag),
+              '[%s] probe=1 does not create a flag for disabled DLLs' % name)
+        for folder in ['same_name', 'directory_marker']:
+            check(read(os.path.join(mods, folder, 'zz_test_mod.log')).count(
+                      'zz_test_mod loaded') == 1,
+                  '[%s] %s still loads its DLL' % (name, folder))
+        check('probe=1' in read(os.path.join(mods, 'same_name', 'zz_test_mod.log')),
+              '[%s] alternative marker suffixes do not disable loading or probe handling' % name)
+
+        with open(os.path.join(mods, 'hoi4_mod_injector.ini'), 'w') as fh:
+            fh.write('[injector]\ndelay_ms=700\nprobe=0\n')
+        with open(probe_flag, 'w') as fh:
+            fh.write('keep while disabled\n')
+        r = run_host(case)
+        check(r.returncode == 0 and read(probe_flag) == 'keep while disabled\n',
+              '[%s] probe=0 preserves a disabled DLL\'s existing flag' % name)
+        check(not os.path.exists(os.path.join(disabled, 'zz_test_mod.log')),
+              '[%s] the DLL stays disabled on the next launch' % name)
+
+        os.remove(marker)
+        r = run_host(case)
+        log = read(log_path)
+        check(r.returncode == 0 and '3 of 3 DLL(s) loaded' in log,
+              '[%s] removing the marker restores loading on the next launch' % name)
+        check(read(os.path.join(disabled, 'zz_test_mod.log')).count(
+                  'zz_test_mod loaded') == 1 and not os.path.exists(probe_flag),
+              '[%s] the restored DLL runs once and normal probe handling resumes' % name)
+
+
+def test_multiple_mod_dirs():
+    print('== loader: multiple immediate child directories ==')
+    case = setup_case('t10_children', ['dxgi'])
+    # A later directory name contains an earlier DLL name. The global order
+    # must still follow DLL names, and .dll directory names are valid folders.
+    other_dir = os.path.join(case, 'injected_mods', 'z_other.dll')
+    os.makedirs(other_dir)
+    shutil.copy(os.path.join(WORK, 'mod', 'zz_test_mod.dll'),
+                os.path.join(other_dir, 'aa_test_mod.DLL'))
+    r = run_host(case)
+    log = read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'))
+    check(r.returncode == 0, 'host with multiple mod directories ran')
+    check('loading [1/2] aa_test_mod.DLL ... ok' in log
+          and 'loading [2/2] zz_test_mod.dll ... ok' in log,
+          'DLLs from both child directories load in global file-name order')
+    check(read(os.path.join(other_dir, 'zz_test_mod.log')).count('zz_test_mod loaded') == 1,
+          'the DLL inside a directory named .dll loaded exactly once')
+    check('2 candidate(s), 2 to load' in log and '2 of 2 DLL(s) loaded' in log,
+          'the summary counts DLLs across child directories')
+
+
 def test_foreign_host():
     print('== loader: a host that is not the game ==')
     case = setup_case('t2_foreign', ['dxgi'], host_name='not_the_game.exe')
     r = run_host(case, exe='not_the_game.exe')
-    log = read(os.path.join(case, 'hoi4_mod_loader.log'))
+    log = read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'))
     check(r.returncode == 0, 'the foreign host still ran (exit %s)' % r.returncode)
     check('host is not hoi4.exe; nothing to do' in log,
           'the loader refused to act outside the game')
-    check(not os.path.exists(os.path.join(case, 'injected_mods', 'zz_test_mod.log')),
+    check(not os.path.exists(os.path.join(case, 'injected_mods', 'test_mod', 'zz_test_mod.log')),
           'no mod was loaded into the foreign host')
 
 
@@ -326,8 +429,8 @@ def test_several_proxies():
     print('== loader: three proxies at once ==')
     case = setup_case('t3_multi', ['dxgi', 'version', 'd3d11'])
     r = run_host(case)
-    log = read(os.path.join(case, 'hoi4_mod_loader.log'))
-    mod_log = read(os.path.join(case, 'injected_mods', 'zz_test_mod.log'))
+    log = read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'))
+    mod_log = read(os.path.join(case, 'injected_mods', 'test_mod', 'zz_test_mod.log'))
     check(r.returncode == 0, 'host ran (exit %s)' % r.returncode)
     check(log.count('loading [1/1] zz_test_mod.dll ... ok (module') == 1,
           'exactly one proxy loaded the mods')
@@ -337,27 +440,42 @@ def test_several_proxies():
 
 
 def test_probe_mode():
-    print('== loader: probe marker ==')
+    print('== loader: INI probe setting ==')
     case = setup_case('t4_probe', ['dxgi'], probe=True)
     run_host(case)
     mods = os.path.join(case, 'injected_mods')
-    log = read(os.path.join(case, 'hoi4_mod_loader.log'))
+    log = read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'))
     check('probe mode: creating diplo_action_hook_probe_only.txt' in log,
           'probe mode was announced')
-    check(os.path.exists(os.path.join(mods, 'diplo_action_hook_probe_only.txt')),
+    check(os.path.exists(os.path.join(mods, 'test_mod', 'diplo_action_hook_probe_only.txt')),
           'diplo_action_hook_probe_only.txt was created next to the mod')
+    check(not os.path.exists(os.path.join(mods, 'diplo_action_hook_probe_only.txt')),
+          'the probe flag is not created in injected_mods itself')
+    check('probe=1' in read(os.path.join(mods, 'test_mod', 'zz_test_mod.log')),
+          'the probe flag was present when the DLL DllMain ran')
+    with open(os.path.join(mods, 'hoi4_mod_injector.ini'), 'w', encoding='ascii') as fh:
+        fh.write('[injector]\ndelay_ms=700\nprobe=0\n')
+    run_host(case)
+    check(not os.path.exists(os.path.join(mods, 'test_mod', 'diplo_action_hook_probe_only.txt')),
+          'probe=0 removes the previous mod-side flag')
+    check('probe=0' in read(os.path.join(mods, 'test_mod', 'zz_test_mod.log')).splitlines()[-1],
+          'the flag was cleared before the next DllMain ran')
 
 
 def test_missing_mods_dir():
     print('== loader: no injected_mods ==')
     case = setup_case('t5_nomods', ['dxgi'], with_mods=False)
     run_host(case)
-    log = read(os.path.join(case, 'hoi4_mod_loader.log'))
+    log = read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'))
     check('(does not exist)' in log, 'the missing folder is mentioned')
-    check("create 'injected_mods' next to hoi4.exe" in log,
+    check("create a subdirectory inside 'injected_mods' next to hoi4.exe" in log,
           'the log tells the player what to do')
+    check(os.path.isfile(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log')),
+          'the missing injected_mods directory is created for the log')
     check('nothing to load' in log or 'loading [' not in log,
           'no DLL was loaded')
+    check('delay_ms=700' in read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.ini')),
+          'a default INI is generated even when injected_mods was absent')
 
 
 def test_launcher_style_wakeup():
@@ -368,11 +486,64 @@ def test_launcher_style_wakeup():
     # to wait for the host to be past its start-up before it acts on it.
     case = setup_case('t8_nopump', ['dxgi'])
     r = run_host(case, args=('--no-pump',))
-    log = read(os.path.join(case, 'hoi4_mod_loader.log'))
+    log = read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'))
     check(r.returncode == 0, 'host ran (exit %s)' % r.returncode)
     check('start : a thread attached after the CRT was up' in log,
           'the thread attach is what started the loader thread')
     check('loading [1/1] zz_test_mod.dll ... ok' in log, 'the mod was loaded')
+
+
+def test_ini_settings():
+    print('== loader: configured delay and existing INI preservation ==')
+    for label, delay in [('later', 1800), ('zero', 0)]:
+        text = '; user configuration must remain unchanged\n[injector]\ndelay_ms=%d\nprobe=0\n' % delay
+        case = setup_case('t11_' + label, ['dxgi'], config_text=text)
+        ini_path = os.path.join(case, 'injected_mods', 'hoi4_mod_injector.ini')
+        before = open(ini_path, 'rb').read()
+        r = run_host(case)
+        log = read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'))
+        mod_log = read(os.path.join(case, 'injected_mods', 'test_mod', 'zz_test_mod.log'))
+        loaded = re.search(r'uptime_ms=(\d+)', mod_log)
+        check(r.returncode == 0 and '1 of 1 DLL(s) loaded' in log,
+              '%s delay: the mod was loaded' % label)
+        check('delay_ms=%d, probe=0' % delay in log,
+              '%s delay: the configured value was read' % label)
+        check(loaded is not None and int(loaded.group(1)) >= max(delay, 700),
+              '%s delay: actual DllMain timing respects delay and safe startup' % label)
+        check(open(ini_path, 'rb').read() == before,
+              '%s delay: the existing INI is preserved byte for byte' % label)
+        if delay:
+            check('waiting ' in log, 'a longer delay causes the worker to wait')
+        else:
+            check('waiting ' not in log, 'delay_ms=0 adds no extra wait after safe startup')
+
+    print('== loader: invalid and missing INI values ==')
+    for label, text, warning in [
+        ('negative', '[injector]\ndelay_ms=-1\nprobe=yes\n', True),
+        ('overflow', '[injector]\ndelay_ms=4294967295\nprobe=2\n', True),
+        ('text', '[injector]\ndelay_ms=oops\nprobe=oops\n', True),
+        ('truncated', '[injector]\ndelay_ms=' + '0' * 80 + '1\nprobe=oops\n', True),
+        ('missing_keys', '[injector]\n', False),
+    ]:
+        case = setup_case('t12_' + label, ['dxgi'], config_text=text)
+        run_host(case)
+        log = read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'))
+        check('delay_ms=700, probe=0' in log and '1 of 1 DLL(s) loaded' in log,
+              '%s values: defaults load the mod normally' % label)
+        if warning:
+            check('invalid delay_ms' in log and 'invalid probe' in log,
+                  '%s values: invalid settings are reported' % label)
+
+    print('== loader: the old probe marker is ignored ==')
+    case = setup_case('t13_old_marker', ['dxgi'])
+    with open(os.path.join(case, 'injected_mods', 'hoi4_mod_loader_probe.txt'), 'w') as fh:
+        fh.write('')
+    run_host(case)
+    log = read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'))
+    check('probe mode:' not in log and 'probe=0' in log,
+          'the old marker does not enable probe mode')
+    check('probe=0' in read(os.path.join(case, 'injected_mods', 'test_mod', 'zz_test_mod.log')),
+          'the DLL observes normal mode despite the old marker')
 
 
 def test_log_is_replaced():
@@ -380,11 +551,11 @@ def test_log_is_replaced():
     # A file an append-mode loader would have left behind, with a marker line
     # that must not survive the next start.
     case = setup_case('t9_replace', ['dxgi'])
-    with open(os.path.join(case, 'hoi4_mod_loader.log'), 'w', encoding='ascii') as fh:
+    with open(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'), 'w', encoding='ascii') as fh:
         fh.write("[     0.000] hoi4_mod_loader 1.0 -- proxy 'dxgi.dll', pid 1234\n")
         fh.write('MARKER FROM AN EARLIER RUN\n')
     run_host(case)
-    log = read(os.path.join(case, 'hoi4_mod_loader.log'))
+    log = read(os.path.join(case, 'injected_mods', 'hoi4_mod_injector.log'))
     check('MARKER FROM AN EARLIER RUN' not in log, 'the earlier run is gone')
     check(log.count('hoi4_mod_loader 1.1 -- proxy') == 1,
           'the file holds exactly the run that just happened')
@@ -421,11 +592,14 @@ def main():
     report_shipped()
     build_tools()
     test_each_proxy()
+    test_noinject_markers()
+    test_multiple_mod_dirs()
     test_foreign_host()
     test_several_proxies()
     test_probe_mode()
     test_missing_mods_dir()
     test_launcher_style_wakeup()
+    test_ini_settings()
     test_log_is_replaced()
     print()
     print('%d checks, %d failure(s)' % (CHECKS[0], len(FAILURES)))

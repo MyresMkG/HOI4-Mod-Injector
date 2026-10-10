@@ -4,10 +4,8 @@
 // Every build is linked against def/<name>.def, which forwards each export to
 // the real system DLL in System32 -- as far as the rest of the game process is
 // concerned this file *is* that DLL, down to the ordinals. DllMain adds one
-// thing on top: it loads every DLL from <game root>\injected_mods into the
-// process, the same set hoi4_mod_injector.exe would have injected from the
-// outside, with the same checks, the same file-name order and the same log
-// shape.
+// thing on top: it loads DLLs from the immediate child directories of
+// <game root>\injected_mods with PE checks and global file-name ordering.
 //
 // Why the work happens on a thread: DllMain runs under the loader lock, and this
 // DLL is loaded *while* the game's own imports are still being resolved, so
@@ -34,8 +32,8 @@
 // reads the flag that says so), and only from a wake-up that can happen that
 // late: the loader's DLL_THREAD_ATTACH for a new thread, or a callback timer on
 // the loading thread once it reaches a message loop. Until then nothing of ours
-// runs on any thread; the worker then still starts its 700 ms wait (kDelayMs)
-// from the process start before it loads anything.
+// runs on any thread; the worker then honours the configured delay_ms,
+// measured from process creation, before it loads anything.
 
 #include <windows.h>
 
@@ -43,6 +41,7 @@
 #include <vector>
 
 #include "crtprobe.h"
+#include "config.h"
 #include "log.h"
 #include "mods.h"
 #include "util.h"
@@ -56,14 +55,8 @@ loader::CrtProbe g_crt;
 // With no probe in the host (another program, a different CRT) nothing can be
 // checked, so a wake-up is only taken once this much of the process's life has
 // passed -- long after any host has walked its imports. The mods still wait out
-// kDelayMs on top of it.
+// the configured delay_ms on top of it.
 const unsigned long kNoProbeSafeMs = 700;
-
-// How old the process has to be before the mods are loaded: the injector's
-// --delay default, and what this loader has always used when nothing said
-// otherwise. It used to be settable through <injected_mods>\hoi4_mod_loader.ini;
-// that file is neither read nor created any more, so the wait is a constant.
-const unsigned long kDelayMs = 700;
 
 // Nothing woke us up although a probe says the CRT is still not up. Rather than
 // leaving the process without mods, the worker is then run on the thread that
@@ -87,8 +80,8 @@ volatile LONG g_started = 0;  // the worker was started (or is running inline)
 
 const wchar_t* kGameExeName = L"hoi4.exe";
 const wchar_t* kModsDirName = L"injected_mods";
-const wchar_t* kLogName = L"hoi4_mod_loader.log";
-const wchar_t* kProbeMarkerName = L"hoi4_mod_loader_probe.txt";
+const wchar_t* kLogName = L"hoi4_mod_injector.log";
+const wchar_t* kConfigName = L"hoi4_mod_injector.ini";
 const wchar_t* kProbeFlagName = L"diplo_action_hook_probe_only.txt";
 const char* kVersion = "1.1";
 
@@ -206,10 +199,10 @@ DWORD WINAPI Worker(void* how_param) {
   const std::wstring mods_dir = game_root + L"\\" + kModsDirName;
   const bool mods_present = loader::DirExists(mods_dir);
 
-  // The loader's own log lives in the game root, next to the exe the player (and
-  // the launcher) look at, and outside a folder that may not be writable. The
-  // mods keep writing their own logs inside injected_mods.
-  loader::LogInit(game_root + L"\\" + kLogName);
+  // Create the log directory when it is missing so the first run can still
+  // explain where to put mods. Keep mods_present as the pre-creation state.
+  if (!mods_present) CreateDirectoryW(mods_dir.c_str(), nullptr);
+  loader::LogInit(mods_dir + L"\\" + kLogName);
   loader::Log("hoi4_mod_loader %s -- proxy '%s', pid %lu", kVersion,
               loader::Narrow(self_name).c_str(),
               static_cast<unsigned long>(GetCurrentProcessId()));
@@ -258,12 +251,10 @@ DWORD WINAPI Worker(void* how_param) {
     return 0;
   }
 
-  // Same shape as the injector: start the game, wait out its own start-up, then
-  // hand it the DLLs. The wait is the fixed kDelayMs -- the injector's --delay
-  // default, and the value the original of this loader was verified with against
-  // Stellaris 4.5, where loading before the image is up is what crashed the game.
-  // It is a lower bound: the wake-up that starts this worker already waited for
-  // the game's CRT (see above).
+  const loader::Config config = loader::ReadConfig(mods_dir + L"\\" + kConfigName);
+
+  // delay_ms measures process age, not an extra wait after CRT readiness.
+  // A zero delay does not bypass the safe wake-up that started this worker.
   //
   // No extra "is the loader idle" probe: LoadLibraryW blocks on the loader lock
   // by itself, so a process that is still bringing its image up simply delays
@@ -272,11 +263,11 @@ DWORD WINAPI Worker(void* how_param) {
   // game in the local tests on that Stellaris build, so it is deliberately not
   // done here either.)
   const unsigned long uptime = loader::ProcessUptimeMs();
-  if (uptime < kDelayMs) {
+  if (uptime < config.delay_ms) {
     loader::Log("waiting %lu ms before loading (the process is %lu ms old)",
-                static_cast<unsigned long>(kDelayMs - uptime),
+                static_cast<unsigned long>(config.delay_ms - uptime),
                 static_cast<unsigned long>(uptime));
-    Sleep(kDelayMs - uptime);
+    Sleep(config.delay_ms - uptime);
   }
 
   // A player may install more than one of the proxy names. The first proxy to get
@@ -292,7 +283,7 @@ DWORD WINAPI Worker(void* how_param) {
     if (!holding) loader::Log("another proxy DLL holds the loader lock; going ahead anyway");
   }
 
-  const bool probe = mods_present && loader::FileExists(mods_dir + L"\\" + kProbeMarkerName);
+  const bool probe = config.probe;
   if (probe) {
     loader::Log("probe mode: creating %s next to every DLL (nothing will be hooked)",
                 loader::Narrow(kProbeFlagName).c_str());
@@ -306,12 +297,12 @@ DWORD WINAPI Worker(void* how_param) {
         mod.loadable = false;
         mod.why = "this is the loader itself";
       }
-      // The flag has to exist before the DLL's DllMain runs, so it is written
-      // here. A folder that cannot be written to is worth saying out loud: the
-      // mod then hooks for real instead of only reporting addresses.
-      if (mod.loadable && probe && !loader::CreateProbeFlag(path)) {
-        loader::Log("  warning: could not create %s next to %s",
-                    loader::Narrow(kProbeFlagName).c_str(), loader::Narrow(mod.name).c_str());
+      // Synchronize mod-side flags before DllMain. Turning probe off also
+      // removes flags left by a previous run or the old probe marker workflow.
+      if (mod.loadable && !loader::SetProbeFlag(path, probe)) {
+        loader::Log("  warning: could not %s %s next to %s",
+                    probe ? "create" : "remove", loader::Narrow(kProbeFlagName).c_str(),
+                    loader::Narrow(mod.name).c_str());
       }
       candidates.push_back(mod);
     }
@@ -362,7 +353,7 @@ DWORD WINAPI Worker(void* how_param) {
               static_cast<unsigned long>(GetCurrentProcessId()));
   for (const std::string& failure : failures) loader::Log("failed: %s", failure.c_str());
   if (!mods_present) {
-    loader::Log("create '%s' next to hoi4.exe and put the DLLs to load in it",
+    loader::Log("create a subdirectory inside '%s' next to hoi4.exe and put the DLLs to load in that subdirectory",
                 loader::Narrow(kModsDirName).c_str());
   } else if (loadable == 0) {
     loader::Log("nothing to load");

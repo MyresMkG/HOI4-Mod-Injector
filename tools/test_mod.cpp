@@ -24,8 +24,20 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID) {
         (slash == std::wstring::npos) ? std::wstring(L".") : path.substr(0, slash);
     FILE* f = _wfopen((dir + L"\\zz_test_mod.log").c_str(), L"a");
     if (f != nullptr) {
-      fprintf(f, "zz_test_mod loaded in pid %lu\n",
-              static_cast<unsigned long>(GetCurrentProcessId()));
+      FILETIME creation, exit, kernel, user, now;
+      unsigned long long uptime = 0;
+      if (GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user)) {
+        GetSystemTimeAsFileTime(&now);
+        const unsigned long long created =
+            (static_cast<unsigned long long>(creation.dwHighDateTime) << 32) | creation.dwLowDateTime;
+        const unsigned long long current =
+            (static_cast<unsigned long long>(now.dwHighDateTime) << 32) | now.dwLowDateTime;
+        if (current > created) uptime = (current - created) / 10000;
+      }
+      const DWORD flag = GetFileAttributesW((dir + L"\\diplo_action_hook_probe_only.txt").c_str());
+      fprintf(f, "zz_test_mod loaded in pid %lu, uptime_ms=%llu, probe=%u\n",
+              static_cast<unsigned long>(GetCurrentProcessId()), uptime,
+              flag != INVALID_FILE_ATTRIBUTES && (flag & FILE_ATTRIBUTE_DIRECTORY) == 0 ? 1u : 0u);
       fclose(f);
     }
   }

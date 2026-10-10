@@ -1,0 +1,480 @@
+== build ==
+building dxgi.dll
+building d3d11.dll
+building d3d9.dll
+building version.dll
+building winmm.dll
+building opengl32.dll
+building d3dcompiler_47.dll
+building d3dx9_43.dll
+building xinput1_3.dll
+
+done:
+d3d11.dll
+d3d9.dll
+d3dcompiler_47.dll
+d3dx9_43.dll
+dxgi.dll
+hoi4.exe
+offline_tests.txt
+offline_tests_release.txt
+opengl32.dll
+version.dll
+winmm.dll
+xinput1_3.dll
+zz_test_mod.dll
+  testing: D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\build_out
+== export tables ==
+  ok   dxgi.dll: every name is exported (19, missing: none)
+  ok   dxgi.dll: no invented names (none)
+  ok   dxgi.dll: ordinals match (none)
+  ok   dxgi.dll: every export forwards to System32 (none)
+  ok   dxgi.dll: every ordinal-only export is there (0, missing: none)
+  ok   dxgi.dll: the ordinal-only ones forward to that ordinal (none)
+  ok   d3d11.dll: every name is exported (51, missing: none)
+  ok   d3d11.dll: no invented names (none)
+  ok   d3d11.dll: ordinals match (none)
+  ok   d3d11.dll: every export forwards to System32 (none)
+  ok   d3d11.dll: every ordinal-only export is there (0, missing: none)
+  ok   d3d11.dll: the ordinal-only ones forward to that ordinal (none)
+  ok   d3d9.dll: every name is exported (17, missing: none)
+  ok   d3d9.dll: no invented names (none)
+  ok   d3d9.dll: ordinals match (none)
+  ok   d3d9.dll: every export forwards to System32 (none)
+  ok   d3d9.dll: every ordinal-only export is there (6, missing: none)
+  ok   d3d9.dll: the ordinal-only ones forward to that ordinal (none)
+  ok   version.dll: every name is exported (17, missing: none)
+  ok   version.dll: no invented names (none)
+  ok   version.dll: ordinals match (none)
+  ok   version.dll: every export forwards to System32 (none)
+  ok   version.dll: every ordinal-only export is there (0, missing: none)
+  ok   version.dll: the ordinal-only ones forward to that ordinal (none)
+  ok   winmm.dll: every name is exported (180, missing: none)
+  ok   winmm.dll: no invented names (none)
+  ok   winmm.dll: ordinals match (none)
+  ok   winmm.dll: every export forwards to System32 (none)
+  ok   winmm.dll: every ordinal-only export is there (1, missing: none)
+  ok   winmm.dll: the ordinal-only ones forward to that ordinal (none)
+  ok   opengl32.dll: every name is exported (368, missing: none)
+  ok   opengl32.dll: no invented names (none)
+  ok   opengl32.dll: ordinals match (none)
+  ok   opengl32.dll: every export forwards to System32 (none)
+  ok   opengl32.dll: every ordinal-only export is there (0, missing: none)
+  ok   opengl32.dll: the ordinal-only ones forward to that ordinal (none)
+  ok   d3dcompiler_47.dll: every name is exported (29, missing: none)
+  ok   d3dcompiler_47.dll: no invented names (none)
+  ok   d3dcompiler_47.dll: ordinals match (none)
+  ok   d3dcompiler_47.dll: every export forwards to System32 (none)
+  ok   d3dcompiler_47.dll: every ordinal-only export is there (0, missing: none)
+  ok   d3dcompiler_47.dll: the ordinal-only ones forward to that ordinal (none)
+  ok   d3dx9_43.dll: every name is exported (329, missing: none)
+  ok   d3dx9_43.dll: no invented names (none)
+  ok   d3dx9_43.dll: ordinals match (none)
+  ok   d3dx9_43.dll: every export forwards to System32 (none)
+  ok   d3dx9_43.dll: every ordinal-only export is there (0, missing: none)
+  ok   d3dx9_43.dll: the ordinal-only ones forward to that ordinal (none)
+  ok   xinput1_3.dll: every name is exported (8, missing: none)
+  ok   xinput1_3.dll: no invented names (none)
+  ok   xinput1_3.dll: ordinals match (none)
+  ok   xinput1_3.dll: every export forwards to System32 (none)
+  ok   xinput1_3.dll: every ordinal-only export is there (4, missing: none)
+  ok   xinput1_3.dll: the ordinal-only ones forward to that ordinal (none)
+== shipped DLLs ==
+  NOTE ..\..\full_releases\hoi4_mod_injector holds other code than the build tested here (dxgi.dll, d3d11.dll, d3d9.dll, version.dll, winmm.dll, opengl32.dll, d3dcompiler_47.dll, d3dx9_43.dll, xinput1_3.dll)
+       run build.bat to refresh it, or --out ..\..\full_releases\hoi4_mod_injector --no-build to test it as it is
+== build host stub and test mod ==
+  host: D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\host\hoi4.exe
+== loader: one proxy per case ==
+  ok   [dxgi] the loader log is inside injected_mods with the new name
+  ok   [dxgi] no root log or old log name is generated
+  ok   [dxgi] DLLs in injected_mods itself are ignored
+  ok   [dxgi] DLLs deeper than immediate child directories are ignored
+  ok   [dxgi] host ran (exit 0)
+  ok   [dxgi] forwarded version API answered
+  ok   [dxgi] the test DLL was loaded
+  ok   [dxgi] its DllMain ran exactly once
+  ok   [dxgi] summary line
+  ok   [dxgi] 32-bit DLL rejected
+  ok   [dxgi] non-PE file rejected
+  ok   [dxgi] a file with a broken header offset is rejected
+  ok   [dxgi] a directory named .dll is not a candidate
+  ok   [dxgi] a copy of the loader in a child directory is skipped
+  ok   [dxgi] the default configuration is logged
+  ok   [dxgi] a commented default configuration is generated
+  ok   [dxgi] the loader thread was started by the message-loop wake-up
+  ok   [dxgi] it was not started before the 700 ms wait (773 ms)
+  ok   [dxgi] no thread was started at attach
+       ---- dxgi log ----
+       [     0.000] hoi4_mod_loader 1.1 -- proxy 'dxgi.dll', pid 77004
+       [     0.000] game  : D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\t1_dxgi\hoi4.exe
+       [     0.000] mods  : D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\t1_dxgi\injected_mods
+       [     0.000] crt   : no per-thread data flag found in hoi4.exe; time only
+       [     0.000] start : the message loop started (773 ms into the process)
+       [     0.000] ini   : created default D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\t1_dxgi\injected_mods\hoi4_mod_injector.ini
+       [     0.000] ini   : D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\t1_dxgi\injected_mods\hoi4_mod_injector.ini, delay_ms=700, probe=0
+       [     0.094] 5 candidate(s), 1 to load
+       [     0.094]   [skip] bad_32bit.dll: not an x64 DLL (machine 0x014c, the game is x64)
+       [     0.094]   [skip] bad_header.dll: not a PE image (bad header offset)
+       [     0.094]   [skip] broken.dll: not a PE image (no MZ signature)
+       [     0.094]   [skip] dxgi.dll: this is the loader itself
+       [     0.094] loading [1/1] zz_test_mod.dll ... ok (module 00007ffa7fb10000)
+       [     0.094] 1 of 1 DLL(s) loaded into pid 77004
+       [     0.094] done, 797 ms after attach
+       ---- host output ----
+       host    : D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\t1_dxgi\hoi4.exe
+       refs    : 73 resolve-only import(s), sink 0x7ff62a9a20e0
+       dxgi.dll    : D:\zStudy\hoi4\source_code\hoi4_mod_injector_src\test_out\t1_dxgi\dxgi.dll
+       d3d11.dll   : C:\Windows\SYSTEM32\d3d11.dll
+       d3d9.dll    : C:\Windows\SYSTEM32\d3d9.dll
+       version.dll : C:\Windows\SYSTEM32\VERSION.dll
+       winmm.dll   : C:\Windows\SYSTEM32\WINMM.dll
+       opengl32.dll: C:\Windows\SYSTEM32\OPENGL32.dll
+       d3dcompiler_47.dll: C:\Windows\SYSTEM32\D3DCOMPILER_47.dll
+       d3dx9_43.dll: C:\Windows\SYSTEM32\d3dx9_43.dll
+       xinput1_3.dll: C:\Windows\SYSTEM32\XINPUT1_3.dll
+       version size : 1788
+       timeBeginPeriod : 0
+       wave devices : 2
+       d3d9 factory : 00000230c2d51b80
+       d3d9ex factory : hr=0x00000000 ptr=00000230c2d51b80
+       dxgi factory : hr=0x00000000 ptr=00000230c4c98640
+       dxgi factory2 : hr=0x00000000 ptr=00000230c4c98640
+       d3d11 device : hr=0x00000000 level=0xb000
+       D3DCompile : hr=0x00000000 bytecode=388
+       D3DXCompileShader : hr=0x00000000 bytecode=136
+       glGetString : (no GL context, as expected here)
+       glGetError : 1282, wglGetCurrentDC : 0000000000000000
+       XInputGetState : 1167, XInputGetCapabilities : 1167 (1167 = no pad is fine)
+       xinput ord2/4 : 0000000000402980/0000000000402f60, by name 0000000000402980/0000000000402f60 -> both land on the same functions
+       host done
+  ok   [d3d11] the loader log is inside injected_mods with the new name
+  ok   [d3d11] no root log or old log name is generated
+  ok   [d3d11] DLLs in injected_mods itself are ignored
+  ok   [d3d11] DLLs deeper than immediate child directories are ignored
+  ok   [d3d11] host ran (exit 0)
+  ok   [d3d11] forwarded version API answered
+  ok   [d3d11] the test DLL was loaded
+  ok   [d3d11] its DllMain ran exactly once
+  ok   [d3d11] summary line
+  ok   [d3d11] 32-bit DLL rejected
+  ok   [d3d11] non-PE file rejected
+  ok   [d3d11] a file with a broken header offset is rejected
+  ok   [d3d11] a directory named .dll is not a candidate
+  ok   [d3d11] a copy of the loader in a child directory is skipped
+  ok   [d3d11] the default configuration is logged
+  ok   [d3d11] a commented default configuration is generated
+  ok   [d3d11] the loader thread was started by the message-loop wake-up
+  ok   [d3d11] it was not started before the 700 ms wait (790 ms)
+  ok   [d3d11] no thread was started at attach
+  ok   [d3d9] the loader log is inside injected_mods with the new name
+  ok   [d3d9] no root log or old log name is generated
+  ok   [d3d9] DLLs in injected_mods itself are ignored
+  ok   [d3d9] DLLs deeper than immediate child directories are ignored
+  ok   [d3d9] host ran (exit 0)
+  ok   [d3d9] forwarded version API answered
+  ok   [d3d9] the test DLL was loaded
+  ok   [d3d9] its DllMain ran exactly once
+  ok   [d3d9] summary line
+  ok   [d3d9] 32-bit DLL rejected
+  ok   [d3d9] non-PE file rejected
+  ok   [d3d9] a file with a broken header offset is rejected
+  ok   [d3d9] a directory named .dll is not a candidate
+  ok   [d3d9] a copy of the loader in a child directory is skipped
+  ok   [d3d9] the default configuration is logged
+  ok   [d3d9] a commented default configuration is generated
+  ok   [d3d9] the loader thread was started by the message-loop wake-up
+  ok   [d3d9] it was not started before the 700 ms wait (776 ms)
+  ok   [d3d9] no thread was started at attach
+  ok   [version] the loader log is inside injected_mods with the new name
+  ok   [version] no root log or old log name is generated
+  ok   [version] DLLs in injected_mods itself are ignored
+  ok   [version] DLLs deeper than immediate child directories are ignored
+  ok   [version] host ran (exit 0)
+  ok   [version] forwarded version API answered
+  ok   [version] the test DLL was loaded
+  ok   [version] its DllMain ran exactly once
+  ok   [version] summary line
+  ok   [version] 32-bit DLL rejected
+  ok   [version] non-PE file rejected
+  ok   [version] a file with a broken header offset is rejected
+  ok   [version] a directory named .dll is not a candidate
+  ok   [version] a copy of the loader in a child directory is skipped
+  ok   [version] the default configuration is logged
+  ok   [version] a commented default configuration is generated
+  ok   [version] the loader thread was started by the message-loop wake-up
+  ok   [version] it was not started before the 700 ms wait (804 ms)
+  ok   [version] no thread was started at attach
+  ok   [winmm] the loader log is inside injected_mods with the new name
+  ok   [winmm] no root log or old log name is generated
+  ok   [winmm] DLLs in injected_mods itself are ignored
+  ok   [winmm] DLLs deeper than immediate child directories are ignored
+  ok   [winmm] host ran (exit 0)
+  ok   [winmm] forwarded version API answered
+  ok   [winmm] the test DLL was loaded
+  ok   [winmm] its DllMain ran exactly once
+  ok   [winmm] summary line
+  ok   [winmm] 32-bit DLL rejected
+  ok   [winmm] non-PE file rejected
+  ok   [winmm] a file with a broken header offset is rejected
+  ok   [winmm] a directory named .dll is not a candidate
+  ok   [winmm] a copy of the loader in a child directory is skipped
+  ok   [winmm] the default configuration is logged
+  ok   [winmm] a commented default configuration is generated
+  ok   [winmm] the loader thread was started by the message-loop wake-up
+  ok   [winmm] it was not started before the 700 ms wait (794 ms)
+  ok   [winmm] no thread was started at attach
+  ok   [opengl32] the loader log is inside injected_mods with the new name
+  ok   [opengl32] no root log or old log name is generated
+  ok   [opengl32] DLLs in injected_mods itself are ignored
+  ok   [opengl32] DLLs deeper than immediate child directories are ignored
+  ok   [opengl32] host ran (exit 0)
+  ok   [opengl32] forwarded version API answered
+  ok   [opengl32] the test DLL was loaded
+  ok   [opengl32] its DllMain ran exactly once
+  ok   [opengl32] summary line
+  ok   [opengl32] 32-bit DLL rejected
+  ok   [opengl32] non-PE file rejected
+  ok   [opengl32] a file with a broken header offset is rejected
+  ok   [opengl32] a directory named .dll is not a candidate
+  ok   [opengl32] a copy of the loader in a child directory is skipped
+  ok   [opengl32] the default configuration is logged
+  ok   [opengl32] a commented default configuration is generated
+  ok   [opengl32] the loader thread was started by the message-loop wake-up
+  ok   [opengl32] it was not started before the 700 ms wait (802 ms)
+  ok   [opengl32] no thread was started at attach
+  ok   [d3dcompiler_47] the loader log is inside injected_mods with the new name
+  ok   [d3dcompiler_47] no root log or old log name is generated
+  ok   [d3dcompiler_47] DLLs in injected_mods itself are ignored
+  ok   [d3dcompiler_47] DLLs deeper than immediate child directories are ignored
+  ok   [d3dcompiler_47] host ran (exit 0)
+  ok   [d3dcompiler_47] forwarded version API answered
+  ok   [d3dcompiler_47] the test DLL was loaded
+  ok   [d3dcompiler_47] its DllMain ran exactly once
+  ok   [d3dcompiler_47] summary line
+  ok   [d3dcompiler_47] 32-bit DLL rejected
+  ok   [d3dcompiler_47] non-PE file rejected
+  ok   [d3dcompiler_47] a file with a broken header offset is rejected
+  ok   [d3dcompiler_47] a directory named .dll is not a candidate
+  ok   [d3dcompiler_47] a copy of the loader in a child directory is skipped
+  ok   [d3dcompiler_47] the default configuration is logged
+  ok   [d3dcompiler_47] a commented default configuration is generated
+  ok   [d3dcompiler_47] the loader thread was started by the message-loop wake-up
+  ok   [d3dcompiler_47] it was not started before the 700 ms wait (772 ms)
+  ok   [d3dcompiler_47] no thread was started at attach
+  ok   [d3dx9_43] the loader log is inside injected_mods with the new name
+  ok   [d3dx9_43] no root log or old log name is generated
+  ok   [d3dx9_43] DLLs in injected_mods itself are ignored
+  ok   [d3dx9_43] DLLs deeper than immediate child directories are ignored
+  ok   [d3dx9_43] host ran (exit 0)
+  ok   [d3dx9_43] forwarded version API answered
+  ok   [d3dx9_43] the test DLL was loaded
+  ok   [d3dx9_43] its DllMain ran exactly once
+  ok   [d3dx9_43] summary line
+  ok   [d3dx9_43] 32-bit DLL rejected
+  ok   [d3dx9_43] non-PE file rejected
+  ok   [d3dx9_43] a file with a broken header offset is rejected
+  ok   [d3dx9_43] a directory named .dll is not a candidate
+  ok   [d3dx9_43] a copy of the loader in a child directory is skipped
+  ok   [d3dx9_43] the default configuration is logged
+  ok   [d3dx9_43] a commented default configuration is generated
+  ok   [d3dx9_43] the loader thread was started by the message-loop wake-up
+  ok   [d3dx9_43] it was not started before the 700 ms wait (785 ms)
+  ok   [d3dx9_43] no thread was started at attach
+  ok   [xinput1_3] the loader log is inside injected_mods with the new name
+  ok   [xinput1_3] no root log or old log name is generated
+  ok   [xinput1_3] DLLs in injected_mods itself are ignored
+  ok   [xinput1_3] DLLs deeper than immediate child directories are ignored
+  ok   [xinput1_3] host ran (exit 0)
+  ok   [xinput1_3] forwarded version API answered
+  ok   [xinput1_3] the test DLL was loaded
+  ok   [xinput1_3] its DllMain ran exactly once
+  ok   [xinput1_3] summary line
+  ok   [xinput1_3] 32-bit DLL rejected
+  ok   [xinput1_3] non-PE file rejected
+  ok   [xinput1_3] a file with a broken header offset is rejected
+  ok   [xinput1_3] a directory named .dll is not a candidate
+  ok   [xinput1_3] a copy of the loader in a child directory is skipped
+  ok   [xinput1_3] the default configuration is logged
+  ok   [xinput1_3] a commented default configuration is generated
+  ok   [xinput1_3] the loader thread was started by the message-loop wake-up
+  ok   [xinput1_3] it was not started before the 700 ms wait (776 ms)
+  ok   [xinput1_3] no thread was started at attach
+== loader: sibling dllnoinject markers ==
+  ok   [dxgi] noinject host ran
+  ok   [dxgi] an empty sibling marker skips the DLL with a reason
+  ok   [dxgi] noinject is checked before the PE header
+  ok   [dxgi] marker files are not candidates or counted as loadable
+  ok   [dxgi] the disabled DLL never ran DllMain
+  ok   [dxgi] probe=1 does not create a flag for disabled DLLs
+  ok   [dxgi] same_name still loads its DLL
+  ok   [dxgi] directory_marker still loads its DLL
+  ok   [dxgi] alternative marker suffixes do not disable loading or probe handling
+  ok   [dxgi] probe=0 preserves a disabled DLL's existing flag
+  ok   [dxgi] the DLL stays disabled on the next launch
+  ok   [dxgi] removing the marker restores loading on the next launch
+  ok   [dxgi] the restored DLL runs once and normal probe handling resumes
+  ok   [d3d11] noinject host ran
+  ok   [d3d11] an empty sibling marker skips the DLL with a reason
+  ok   [d3d11] noinject is checked before the PE header
+  ok   [d3d11] marker files are not candidates or counted as loadable
+  ok   [d3d11] the disabled DLL never ran DllMain
+  ok   [d3d11] probe=1 does not create a flag for disabled DLLs
+  ok   [d3d11] same_name still loads its DLL
+  ok   [d3d11] directory_marker still loads its DLL
+  ok   [d3d11] alternative marker suffixes do not disable loading or probe handling
+  ok   [d3d11] probe=0 preserves a disabled DLL's existing flag
+  ok   [d3d11] the DLL stays disabled on the next launch
+  ok   [d3d11] removing the marker restores loading on the next launch
+  ok   [d3d11] the restored DLL runs once and normal probe handling resumes
+  ok   [d3d9] noinject host ran
+  ok   [d3d9] an empty sibling marker skips the DLL with a reason
+  ok   [d3d9] noinject is checked before the PE header
+  ok   [d3d9] marker files are not candidates or counted as loadable
+  ok   [d3d9] the disabled DLL never ran DllMain
+  ok   [d3d9] probe=1 does not create a flag for disabled DLLs
+  ok   [d3d9] same_name still loads its DLL
+  ok   [d3d9] directory_marker still loads its DLL
+  ok   [d3d9] alternative marker suffixes do not disable loading or probe handling
+  ok   [d3d9] probe=0 preserves a disabled DLL's existing flag
+  ok   [d3d9] the DLL stays disabled on the next launch
+  ok   [d3d9] removing the marker restores loading on the next launch
+  ok   [d3d9] the restored DLL runs once and normal probe handling resumes
+  ok   [version] noinject host ran
+  ok   [version] an empty sibling marker skips the DLL with a reason
+  ok   [version] noinject is checked before the PE header
+  ok   [version] marker files are not candidates or counted as loadable
+  ok   [version] the disabled DLL never ran DllMain
+  ok   [version] probe=1 does not create a flag for disabled DLLs
+  ok   [version] same_name still loads its DLL
+  ok   [version] directory_marker still loads its DLL
+  ok   [version] alternative marker suffixes do not disable loading or probe handling
+  ok   [version] probe=0 preserves a disabled DLL's existing flag
+  ok   [version] the DLL stays disabled on the next launch
+  ok   [version] removing the marker restores loading on the next launch
+  ok   [version] the restored DLL runs once and normal probe handling resumes
+  ok   [winmm] noinject host ran
+  ok   [winmm] an empty sibling marker skips the DLL with a reason
+  ok   [winmm] noinject is checked before the PE header
+  ok   [winmm] marker files are not candidates or counted as loadable
+  ok   [winmm] the disabled DLL never ran DllMain
+  ok   [winmm] probe=1 does not create a flag for disabled DLLs
+  ok   [winmm] same_name still loads its DLL
+  ok   [winmm] directory_marker still loads its DLL
+  ok   [winmm] alternative marker suffixes do not disable loading or probe handling
+  ok   [winmm] probe=0 preserves a disabled DLL's existing flag
+  ok   [winmm] the DLL stays disabled on the next launch
+  ok   [winmm] removing the marker restores loading on the next launch
+  ok   [winmm] the restored DLL runs once and normal probe handling resumes
+  ok   [opengl32] noinject host ran
+  ok   [opengl32] an empty sibling marker skips the DLL with a reason
+  ok   [opengl32] noinject is checked before the PE header
+  ok   [opengl32] marker files are not candidates or counted as loadable
+  ok   [opengl32] the disabled DLL never ran DllMain
+  ok   [opengl32] probe=1 does not create a flag for disabled DLLs
+  ok   [opengl32] same_name still loads its DLL
+  ok   [opengl32] directory_marker still loads its DLL
+  ok   [opengl32] alternative marker suffixes do not disable loading or probe handling
+  ok   [opengl32] probe=0 preserves a disabled DLL's existing flag
+  ok   [opengl32] the DLL stays disabled on the next launch
+  ok   [opengl32] removing the marker restores loading on the next launch
+  ok   [opengl32] the restored DLL runs once and normal probe handling resumes
+  ok   [d3dcompiler_47] noinject host ran
+  ok   [d3dcompiler_47] an empty sibling marker skips the DLL with a reason
+  ok   [d3dcompiler_47] noinject is checked before the PE header
+  ok   [d3dcompiler_47] marker files are not candidates or counted as loadable
+  ok   [d3dcompiler_47] the disabled DLL never ran DllMain
+  ok   [d3dcompiler_47] probe=1 does not create a flag for disabled DLLs
+  ok   [d3dcompiler_47] same_name still loads its DLL
+  ok   [d3dcompiler_47] directory_marker still loads its DLL
+  ok   [d3dcompiler_47] alternative marker suffixes do not disable loading or probe handling
+  ok   [d3dcompiler_47] probe=0 preserves a disabled DLL's existing flag
+  ok   [d3dcompiler_47] the DLL stays disabled on the next launch
+  ok   [d3dcompiler_47] removing the marker restores loading on the next launch
+  ok   [d3dcompiler_47] the restored DLL runs once and normal probe handling resumes
+  ok   [d3dx9_43] noinject host ran
+  ok   [d3dx9_43] an empty sibling marker skips the DLL with a reason
+  ok   [d3dx9_43] noinject is checked before the PE header
+  ok   [d3dx9_43] marker files are not candidates or counted as loadable
+  ok   [d3dx9_43] the disabled DLL never ran DllMain
+  ok   [d3dx9_43] probe=1 does not create a flag for disabled DLLs
+  ok   [d3dx9_43] same_name still loads its DLL
+  ok   [d3dx9_43] directory_marker still loads its DLL
+  ok   [d3dx9_43] alternative marker suffixes do not disable loading or probe handling
+  ok   [d3dx9_43] probe=0 preserves a disabled DLL's existing flag
+  ok   [d3dx9_43] the DLL stays disabled on the next launch
+  ok   [d3dx9_43] removing the marker restores loading on the next launch
+  ok   [d3dx9_43] the restored DLL runs once and normal probe handling resumes
+  ok   [xinput1_3] noinject host ran
+  ok   [xinput1_3] an empty sibling marker skips the DLL with a reason
+  ok   [xinput1_3] noinject is checked before the PE header
+  ok   [xinput1_3] marker files are not candidates or counted as loadable
+  ok   [xinput1_3] the disabled DLL never ran DllMain
+  ok   [xinput1_3] probe=1 does not create a flag for disabled DLLs
+  ok   [xinput1_3] same_name still loads its DLL
+  ok   [xinput1_3] directory_marker still loads its DLL
+  ok   [xinput1_3] alternative marker suffixes do not disable loading or probe handling
+  ok   [xinput1_3] probe=0 preserves a disabled DLL's existing flag
+  ok   [xinput1_3] the DLL stays disabled on the next launch
+  ok   [xinput1_3] removing the marker restores loading on the next launch
+  ok   [xinput1_3] the restored DLL runs once and normal probe handling resumes
+== loader: multiple immediate child directories ==
+  ok   host with multiple mod directories ran
+  ok   DLLs from both child directories load in global file-name order
+  ok   the DLL inside a directory named .dll loaded exactly once
+  ok   the summary counts DLLs across child directories
+== loader: a host that is not the game ==
+  ok   the foreign host still ran (exit 0)
+  ok   the loader refused to act outside the game
+  ok   no mod was loaded into the foreign host
+== loader: three proxies at once ==
+  ok   host ran (exit 0)
+  ok   exactly one proxy loaded the mods
+  ok   the other proxies reported the module as already loaded
+  ok   DllMain still ran exactly once
+== loader: INI probe setting ==
+  ok   probe mode was announced
+  ok   diplo_action_hook_probe_only.txt was created next to the mod
+  ok   the probe flag is not created in injected_mods itself
+  ok   the probe flag was present when the DLL DllMain ran
+  ok   probe=0 removes the previous mod-side flag
+  ok   the flag was cleared before the next DllMain ran
+== loader: no injected_mods ==
+  ok   the missing folder is mentioned
+  ok   the log tells the player what to do
+  ok   the missing injected_mods directory is created for the log
+  ok   no DLL was loaded
+  ok   a default INI is generated even when injected_mods was absent
+== loader: the launcher shape (no message loop, a late thread) ==
+  ok   host ran (exit 0)
+  ok   the thread attach is what started the loader thread
+  ok   the mod was loaded
+== loader: configured delay and existing INI preservation ==
+  ok   later delay: the mod was loaded
+  ok   later delay: the configured value was read
+  ok   later delay: actual DllMain timing respects delay and safe startup
+  ok   later delay: the existing INI is preserved byte for byte
+  ok   a longer delay causes the worker to wait
+  ok   zero delay: the mod was loaded
+  ok   zero delay: the configured value was read
+  ok   zero delay: actual DllMain timing respects delay and safe startup
+  ok   zero delay: the existing INI is preserved byte for byte
+  ok   delay_ms=0 adds no extra wait after safe startup
+== loader: invalid and missing INI values ==
+  ok   negative values: defaults load the mod normally
+  ok   negative values: invalid settings are reported
+  ok   overflow values: defaults load the mod normally
+  ok   overflow values: invalid settings are reported
+  ok   text values: defaults load the mod normally
+  ok   text values: invalid settings are reported
+  ok   truncated values: defaults load the mod normally
+  ok   truncated values: invalid settings are reported
+  ok   missing_keys values: defaults load the mod normally
+== loader: the old probe marker is ignored ==
+  ok   the old marker does not enable probe mode
+  ok   the DLL observes normal mode despite the old marker
+== loader: each start replaces the log ==
+  ok   the earlier run is gone
+  ok   the file holds exactly the run that just happened
+  ok   and it starts at its own header line
+
+391 checks, 0 failure(s)

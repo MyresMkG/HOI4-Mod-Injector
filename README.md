@@ -6,14 +6,28 @@
 `version.dll` / `d3d11.dll` / `d3d9.dll` / `opengl32.dll` / `d3dcompiler_47.dll` /
 `d3dx9_43.dll` / `xinput1_3.dll`，一共九种），加载器就在游戏进程里跑，不需要外部工具。
 
-源码是从 `stellaris` 项目的 `stellaris_mod_injector_dll_src` 逐行移植过来的，
-只做三处替换：宿主进程名 `stellaris.exe` → `hoi4.exe`、名字
-`stellaris_mod_injector_dll` → `hoi4_mod_injector`、日志文件名
-`stellaris_mod_loader.log` → `hoi4_mod_loader.log`。其余行为、日志形状、
-探测标记、互斥量、加载顺序、PE 检查都与原版一致（内部名跟着日志走：
-`hoi4_mod_loader 1.1 -- proxy '...'`、`hoi4_mod_loader_probe.txt`）。
+源码从 `stellaris` 项目的 `stellaris_mod_injector_dll_src` 移植而来，
+宿主进程名改为 `hoi4.exe`，项目名改为 `hoi4_mod_injector`。
+2026-10-10 更新：日志改为游戏根目录下的
+`injected_mods\hoi4_mod_injector.log`；DLL 只扫描
+`injected_mods\<一级子目录>\*.dll`，不扫描 `injected_mods` 本层或更深目录。
+各一级子目录里的 DLL 合并后按文件名排序（不区分大小写），同名时按完整路径排序。
+互斥量、PE 检查和日志头中的内部名 `hoi4_mod_loader 1.1 -- proxy '...'` 保留原有约定。
+配置统一放在 `injected_mods\hoi4_mod_injector.ini`，不存在时自动生成带注释的默认配置，
+已有文件不覆盖。旧版 `hoi4_mod_loader.ini` 和 `hoi4_mod_loader_probe.txt` 不再读取。
 
-（注：使用deepseek-v4.1-flash编写，harness为Kimi Code）
+```ini
+[injector]
+delay_ms=700
+probe=0
+```
+
+`delay_ms` 是加载 DLL 前的最小进程年龄（毫秒，从进程创建时算起），默认 700。
+接受 0–4294967294 的十进制整数；缺少参数或值无效时使用默认值，无效值会写日志。
+设为 0 也不绕过 CRT 初始化和安全唤醒检查。`probe` 只接受 0 或 1，默认 0；
+1 表示只探测，0 表示正常加载。修改配置后重启游戏生效。
+
+成品和面向玩家的说明在 `..\..\full_releases\hoi4_mod_injector\`。
 
 ---
 
@@ -27,6 +41,7 @@ hoi4_mod_injector_src/
 ├── src/
 │   ├── dllmain.cpp               DllMain（只登记 + 查标志位）+ 延迟启动 + 加载流程
 │   ├── crtprobe.h / crtprobe.cpp 在主 exe 里找"游戏 CRT 是否已经初始化"的标志位
+│   ├── config.h / config.cpp     默认 INI 生成、delay_ms 与 probe 读取及校验
 │   ├── mods.h / mods.cpp         injected_mods 扫描、PE 检查、加载、probe 标记
 │   ├── log.h / log.cpp           覆盖式日志（每次启动重写）+ OutputDebugString
 │   └── util.h / util.cpp         路径、UTF-8、Win32 错误文本
@@ -67,21 +82,40 @@ hoi4_mod_injector_src/
    的线程上直接加载（`start : the CRT stayed unready for ...`）——建线程才危险，
    在已有线程上跑不危险。找不到标志位（别的宿主、别的 CRT）时退回按时间等
    （`kNoProbeSafeMs` = 700 ms）那一套。
-4. 线程起来之后：等进程满 700 ms（`kDelayMs`，与注入器 `--delay 700` 同值，起点是进程
-   创建时刻）→ 取一个按 pid 命名的互斥量（玩家装多个名字时只有一个负责加载，
-   其余会看到 "was already loaded in the process"）→ 扫 `injected_mods\*.dll`，
-   按**文件名顺序**（与注入器一致，保证动态关键字注册顺序稳定）→ 与注入器**同一套**
+4. 线程起来之后：确认宿主是 `hoi4.exe` → 生成或读取 INI → 等进程满
+   `delay_ms`（默认 700 ms，起点是进程创建时刻）→ 取一个按 pid 命名的互斥量
+   （玩家装多个名字时只有一个负责加载，
+   其余会看到 "was already loaded in the process"）→ 只扫
+   `injected_mods\<一级子目录>\*.dll`（不扫本层，不递归），
+   合并后按**文件名顺序**（同名按完整路径，均不区分大小写）→ 检查同目录的
+   `<DLL文件名>noinject` 文件，有则跳过 → 与注入器**同一套**
    PE 检查（是 DLL、x64），坏文件跳过并写明原因 → `LoadLibraryW` 全路径逐个加载，
    每个都写一行 `ok (module ...)` 或 `FAILED: ...` → 汇总 `N of M DLL(s) loaded`。
-   日志写在**游戏根目录**的 `hoi4_mod_loader.log`（1.1 起；更早的版本写在
-   `injected_mods\` 里，那里也可能有旧文件）—— 和 exe 并排，玩家一眼就能找到，
-   也不受 `injected_mods` 目录是否可写影响。**每次启动覆盖**，文件里只有这一次
+   日志写在**游戏根目录下的 `injected_mods\hoi4_mod_injector.log`**。
+   `injected_mods` 不存在时先创建目录，并在日志中提示建立子目录放 DLL。
+   **每次启动覆盖**，文件里只有这一次
    运行：玩家看的永远是刚才那次，昨天的失败不会再混进来。各个 mod 自己的日志
-   仍写在它们自己旁边（那些是追加的）。
-5. `hoi4_mod_loader_probe.txt` 存在时，会在每个 DLL 旁边生成
-   `diplo_action_hook_probe_only.txt`（= 注入器的 `--probe`）。标记文件名与
-   stellaris 版**逐字相同**：它是 mod 侧读的文件名，不是一个可以随手改的显示名，
-   要保持两边的钩子 mod 行为一致就跟着原版走（要改名就改 `src/mods.cpp`）。
+   仍写在它们自己的子目录里（那些是追加的）。旧版的 `hoi4_mod_loader.log`
+   不会自动迁移或删除，新版不再写入这个文件名。
+5. INI 的 `[injector] probe=1` 时，在每个可加载 DLL 旁边生成
+   `diplo_action_hook_probe_only.txt`（= 注入器的 `--probe`）；只有支持该标记的 mod
+   才会只解析地址而不安装钩子。`probe=0` 时，在加载 DLL 前删除对应的标记，
+   包括旧版遗留的标记。创建或删除失败会写警告。只同步本次扫描到的可加载 DLL
+   旁边的标记，不处理本层或更深目录。旧的 `hoi4_mod_loader_probe.txt` 不再生效。
+
+### 禁用单个 DLL（dllnoinject）
+
+从 `stellaris_mod_injector_dll_src` 引入同样的禁用规则：在
+`injected_mods\my_mod\hook.dll` 旁创建空文件 `hook.dllnoinject`。
+文件内容不限，名称是在完整 DLL 文件名后直接追加 `noinject`；
+`hook.noinject`、`hook.dllnoload` 和名为 `hook.dllnoinject` 的目录都不会禁用 DLL。
+标记只影响同目录的对应 DLL，其他子目录的同名 DLL 照常处理。
+
+检查在打开 DLL、PE 校验和探测标记处理之前完成。禁用 DLL 仍计入候选数量，
+不计入待加载数量，日志会写 `[skip] hook.dll: disabled by hook.dllnoinject`。
+禁用期间不会创建或清除该 DLL 对应的探测标记；同目录还有其他可加载 DLL 时，
+它们仍按配置处理共享的探测标记。删除禁用文件后，下次启动恢复正常加载和探测处理。
+此规则只控制本加载器，不卸载已加载的 DLL，也不能阻止其他模块自行加载它。
 
 ### 为什么 DllMain 里不再创建线程（1.1）
 
@@ -173,7 +207,7 @@ py -3 tools\run_tests.py --out ..\..\full_releases\hoi4_mod_injector --no-build
 不会被碰；两边都存在时会比对 `.text` 段，并注明"发布的 DLL 就是刚测过的这份代码"
 还是"和刚测的这份不是同一份代码"。
 
-236 项检查，全部离线（不碰游戏）：
+391 项自动检查，全部离线（不碰游戏）：
 
 1. **导出表核对**（每种名字）：名字集合一致、无多余名字、序号一致、每个导出都转发回
    System32 的真文件；**只有序号、没有名字**的导出同样逐个核对（在不在、序号对不对、
@@ -186,17 +220,25 @@ py -3 tools\run_tests.py --out ..\..\full_releases\hoi4_mod_injector --no-build
    取一次那两个函数、要求和同名导入落到同一个地址（游戏正是按序号导入的）；
    转发器解析不了的话它在启动阶段就会失败；
 3. **加载流程**（九种名字各一遍）：测试 mod 被加载且 DllMain 只跑一次、32 位 DLL / 非 PE
-   文件 / MZ 合法但头偏移坏掉的文件被跳过并写明原因、`injected_mods` 里叫 `*.dll` 的**目录**
+   文件 / MZ 合法但头偏移坏掉的文件被跳过并写明原因、子目录里叫 `*.dll` 的**目录**
    不算候选、loader 自己那份副本被跳过、日志与汇总行正确，
-   且日志写在**游戏根目录**、不再落在 `injected_mods\` 里；
+   且日志写在 `injected_mods\hoi4_mod_injector.log`，不生成根目录日志或旧名称日志；
+   在本层和更深目录放入有效 DLL，确认它们既不成为候选也不加载；
+   多个一级子目录（含名字以 `.dll` 结尾的目录）和大写 `.DLL` 扩展名均能加载，
+   并按全局文件名顺序加载；
    另外每种名字都要求 `start :` 行说加载线程是**被消息循环叫醒**的（而不是在挂接时
-   就创建）、叫醒时刻不早于那 700 ms，且日志里**不再出现** `ini   :` 或 `delay_ms`
-   （ini 已移除，这条是回归哨兵）；
-4. **负例**：宿主不是 `hoi4.exe` 时拒绝加载、缺 `injected_mods` 时写指引、
-   三个代理同时装时只加载一遍、probe 标记生成正确；
+   就创建）、无 CRT 探测的测试宿主叫醒时刻不早于 700 ms；
+   默认 INI 自动生成且包含注释，日志记录实际使用的 `delay_ms` 和 `probe`；
+4. **负例**：宿主不是 `hoi4.exe` 时拒绝加载、缺 `injected_mods` 时创建日志目录并写指引、
+   三个代理同时装时只加载一遍、INI 探测开关在 DLL 的 DllMain 执行前正确生成或清除标记；
 5. **启动器那种启动方式**：宿主不跑消息循环、只在 1.2 秒后起一条线程 —— 这时
    只有 `DLL_THREAD_ATTACH` 能叫醒代理，要求日志写出
-   `start : a thread attached after the CRT was up` 且 mod 照常加载。
+   `start : a thread attached after the CRT was up` 且 mod 照常加载；
+6. **配置**：自定义 1800 ms 和 0 ms 延迟，核对 DLL 实际加载的进程年龄；已有 INI
+   逐字节保持不变；负数、非数字、溢出和过长值回退默认；缺参数用默认；旧探测文件无效。
+7. **禁用单个 DLL**（九种代理各一遍）：空标记与非空标记均生效，禁用优先于 PE
+   检查；标记文件不成为候选；目录和错误后缀不生效；其他目录同名 DLL 不受影响；
+   禁用 DLL 不加载且不处理探测标记；删除禁用文件后，下次启动恢复加载。
 
 ### 游戏相关的三个工具（不进自动测试）
 
@@ -230,7 +272,17 @@ py -3 tools\run_tests.py --out ..\..\full_releases\hoi4_mod_injector --no-build
   suspended_start_check.exe "D:\SteamLibrary\steamapps\common\Hearts of Iron IV\hoi4.exe" 8
   ```
 
-### 本机结果（Windows 10 19045，2026-10-05）
+### 本次构建验证（2026-10-10）
+
+`py -3 tools\run_tests.py`：391 项检查，0 失败。
+九种代理 DLL 全部重新编译，测试通过后从 `build_out\` 更新到
+`..\..\full_releases\hoi4_mod_injector\`，逐个核对 SHA256 与已测试的 DLL 相同。
+完整记录见成品目录的 `验证日志_离线自动测试_20261010_DLLNOINJECT.txt`。
+先前 INI 配置构建的记录保留在 `验证日志_离线自动测试_20261010_INI.txt`。
+先前仅调整日志路径与扫描层级的构建记录保留在 `验证日志_离线自动测试_20261010.txt`。
+本次未重新运行真实游戏；下方实机记录对应更新前的构建与目录布局。
+
+### 历史本机结果（Windows 10 19045，2026-10-05）
 
 - `hoi4.exe` 1.19.3（游戏目录里那份，md5 `b193cb363b5024144bcf278571801fa6`；见上面
   "实机验证"里的说明，这份是 2026-10-03 被改过的，工作目录里另存了一份 9 月 17 日的
@@ -243,7 +295,7 @@ py -3 tools\run_tests.py --out ..\..\full_releases\hoi4_mod_injector --no-build
   - 全部 216 项离线检查通过，两次：一次测刚编出来的产物、一次直接测发布目录里那九个
     DLL（原始输出见成品目录的 `验证日志_离线自动测试.txt`）。
 
-### 实机验证
+### 历史实机验证（更新前的目录布局）
 
 真游戏 1.19.3（游戏目录 `D:\SteamLibrary\steamapps\common\Hearts of Iron IV`，
 `injected_mods` 里一个测试 mod `zz_test_mod.dll`，记录自己的 DllMain 跑了几次）。
@@ -305,8 +357,9 @@ CRT 标志位仍是 `hoi4.exe+0x30c7820`、导入表一个不少 —— `check_c
 | 注入器（外部） | 本 DLL 版（进程内） |
 | --- | --- |
 | `CreateProcess` 后等 700 ms，再远程 `LoadLibraryW` | 进程创建后等 700 ms，进程内 `LoadLibraryW` |
-| `--delay` / `--probe` / `--attach` / `--wait` / `--new-instance` / `--list` | 不适用（固定等进程满 700 ms）/ 标记文件 / 不适用 / 不适用 / 不适用 / 日志里的 `[skip]`+`loading` 行 |
+| `--delay` / `--probe` / `--attach` / `--wait` / `--new-instance` / `--list` | INI 的 `delay_ms` / INI 的 `probe` / 不适用 / 不适用 / 不适用 / 日志里的 `[skip]`+`loading` 行 |
 | 注入失败会打印错误并保留窗口 | 写日志，游戏继续跑 |
 | 需要玩家每次双击 | 随游戏启动自动生效 |
+| 外部注入器原有的扫描规则 | 只加载 `injected_mods\<一级子目录>\*.dll` |
 
 两者可以共存：`LoadLibrary` 对已加载模块返回旧句柄，`DllMain` 不会跑第二次。

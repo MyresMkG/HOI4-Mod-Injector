@@ -4,7 +4,9 @@ rem
 rem Every variant takes the name of a system DLL the game loads anyway and
 rem forwards all of its exports to the real file in System32 (def\<name>.def),
 rem so the game cannot tell the difference -- except that DllMain now loads
-rem every DLL from injected_mods once the game's own image is up.
+rem DLLs from immediate child directories of injected_mods once the game's own
+rem image is up (no DLLs in injected_mods itself or deeper directories).
+rem A sibling <DLL filename>noinject file disables the corresponding DLL.
 rem
 rem Without arguments all nine names are built; with arguments only those are,
 rem e.g.   build.bat opengl32 xinput1_3
@@ -38,7 +40,7 @@ set NAMES=%*
 if "%NAMES%"=="" set NAMES=dxgi d3d11 d3d9 version winmm opengl32 d3dcompiler_47 d3dx9_43 xinput1_3
 
 set COMMON=-std=c++17 -O2 -Wall -Wextra -static -static-libgcc -static-libstdc++
-set SOURCES=%SRC%\dllmain.cpp %SRC%\crtprobe.cpp %SRC%\mods.cpp %SRC%\log.cpp %SRC%\util.cpp
+set SOURCES=%SRC%\dllmain.cpp %SRC%\crtprobe.cpp %SRC%\config.cpp %SRC%\mods.cpp %SRC%\log.cpp %SRC%\util.cpp
 
 for %%N in (%NAMES%) do (
   echo building %%N.dll
