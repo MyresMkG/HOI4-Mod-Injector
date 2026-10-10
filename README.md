@@ -29,6 +29,10 @@ probe=0
 
 成品和面向玩家的说明在 `..\..\full_releases\hoi4_mod_injector\`。
 
+（初版由deepseek-v4.1-flash编写，harness为kimi code）
+
+（新版由gpt-6.1-sol编写，harness为codex）
+
 ---
 
 ## 1. 目录
